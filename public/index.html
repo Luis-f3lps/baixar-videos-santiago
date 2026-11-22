@@ -5,6 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TubeCut - Baixar e Cortar Vídeos do YouTube</title>
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>▶️</text></svg>">
     <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js"></script>
     <script src="https://unpkg.com/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
     <style>
@@ -441,6 +443,12 @@
                 const apiData = await apiRes.json();
                 if (!apiRes.ok) throw new Error(apiData.error || 'Erro ao buscar vídeo');
 
+                const duracaoTotal = apiData.duration;
+                const tempoFinal = duracaoTotal - endTrimSeconds;
+                if (tempoFinal <= startTotalSeconds) {
+                    throw new Error('O tempo de corte excede a duração total do vídeo.');
+                }
+
                 mostrarStatus('Carregando motor de corte...', true);
                 const ffmpeg = new FFmpeg();
                 await ffmpeg.load({
@@ -449,17 +457,6 @@
 
                 mostrarStatus('Baixando vídeo para recorte...', true);
                 await ffmpeg.writeFile('input.mp4', await fetchFile(apiData.downloadUrl));
-
-                const videoTemp = document.createElement('video');
-                videoTemp.crossOrigin = 'anonymous';
-                videoTemp.src = apiData.downloadUrl;
-                await new Promise(resolve => {videoTemp.onloadedmetadata = resolve;});
-                const duracaoTotal = Math.floor(videoTemp.duration);
-
-                const tempoFinal = duracaoTotal - endTrimSeconds;
-                if (tempoFinal <= startTotalSeconds) {
-                    throw new Error('O tempo de corte excede a duração total do vídeo.');
-                }
 
                 mostrarStatus(`Cortando de ${startTotalSeconds}s até ${tempoFinal}s...`, true);
                 await ffmpeg.exec([
