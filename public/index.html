@@ -439,10 +439,14 @@
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({url: `https://www.youtube.com/watch?v=${videoId}`})
                 });
-
-                const apiData = await apiRes.json();
+                const rawText = await apiRes.text();
+                let apiData;
+                try {
+                    apiData = JSON.parse(rawText);
+                } catch {
+                    throw new Error(rawText);
+                }
                 if (!apiRes.ok) throw new Error(apiData.error || 'Erro ao buscar vídeo');
-
                 const duracaoTotal = apiData.duration;
                 const tempoFinal = duracaoTotal - endTrimSeconds;
                 if (tempoFinal <= startTotalSeconds) {
