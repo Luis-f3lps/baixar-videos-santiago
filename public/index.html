@@ -456,7 +456,8 @@
                 });
 
                 mostrarStatus('Baixando vídeo para recorte...', true);
-                await ffmpeg.writeFile('input.mp4', await fetchFile(apiData.downloadUrl));
+                const streamProxyUrl = `/api/stream?url=${encodeURIComponent(apiData.downloadUrl)}`;
+                await ffmpeg.writeFile('input.mp4', await fetchFile(streamProxyUrl));
 
                 mostrarStatus(`Cortando de ${startTotalSeconds}s até ${tempoFinal}s...`, true);
                 await ffmpeg.exec([

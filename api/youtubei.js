@@ -1,0 +1,8 @@
+{
+  "name": "tubecut",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "youtubei.js": "^10.5.0"
+  }
+}

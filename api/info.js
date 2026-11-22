@@ -1,4 +1,4 @@
-import ytdl from '@distube/ytdl-core';
+import { Innertube } from 'youtubei.js';
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
@@ -6,27 +6,27 @@ export default async function handler(req, res) {
     }
 
     const { url } = req.body;
+    const match = url?.match(/(?:v=|youtu\.be\/|shorts\/)([^"&?\/\s]{11})/);
+    const videoId = match ? match[1] : null;
 
-    if (!url || !ytdl.validateURL(url)) {
-        return res.status(400).json({ error: 'URL do YouTube inválida' });
+    if (!videoId) {
+        return res.status(400).json({ error: 'ID do vídeo inválido' });
     }
 
     try {
-        const info = await ytdl.getInfo(url);
-        const format = ytdl.chooseFormat(info.formats, {
-            quality: 'highest',
-            filter: format => format.container === 'mp4' && format.hasVideo && format.hasAudio
-        });
+        const yt = await Innertube.create({ client_type: 'ANDROID' });
+        const info = await yt.getBasicInfo(videoId);
+        const format = info.chooseFormat({ type: 'video+audio', quality: 'best' });
 
         if (!format || !format.url) {
-            return res.status(400).json({ error: 'Nenhum formato MP4 compatível encontrado' });
+            return res.status(400).json({ error: 'Formato compatível não encontrado' });
         }
 
         return res.status(200).json({
             downloadUrl: format.url,
-            duration: Number(info.videoDetails.lengthSeconds)
+            duration: info.basic_info.duration
         });
     } catch (error) {
-        return res.status(500).json({ error: 'Falha ao extrair vídeo do YouTube: ' + error.message });
+        return res.status(500).json({ error: 'Falha ao extrair vídeo: ' + error.message });
     }
 }
